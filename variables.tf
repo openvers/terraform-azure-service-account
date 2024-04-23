@@ -3,6 +3,11 @@
 ## These variables are expected to be passed in by the operator
 ## ---------------------------------------------------------------------------------------------------------------------
 
+variable "application_display_name" {
+  type        = string
+  description = "Service Account AD Application Name"
+}
+
 variable "role_name" {
   type        = string
   description = "Service Account Role Name"
@@ -11,11 +16,6 @@ variable "role_name" {
 variable "security_group_name" {
   type        = string
   description = "Security Group Name"
-}
-
-variable "application_display_name" {
-  type        = string
-  description = "Service Account AD Application Name"
 }
 
 ## ---------------------------------------------------------------------------------------------------------------------
@@ -36,6 +36,7 @@ variable "client_secret_expiration" {
 }
 
 variable "tags" {
+  type        = map()
   description = "Azure Resource Tag(s)"
   default     = {}
 }
