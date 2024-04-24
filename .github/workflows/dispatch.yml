@@ -61,13 +61,10 @@ jobs:
     terraform:
       name: "terraform"
       runs-on: ubuntu-latest
-<<<<<<< HEAD
       defaults:
         run:
           working-directory: "${{ env.GITHUB_WORKSPACE }}/.github/test"
-=======
-      current_director: "${{ env.GITHUB_WORKSPACE }}/.github/test"
->>>>>>> 248d64cebfdbdc84c6de124d538d364257229a85
+          
       steps:
         - name: Checkout Code
           uses: actions/checkout@v3
