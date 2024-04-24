@@ -34,9 +34,3 @@ variable "client_secret_expiration" {
   description = "Service Account Secret Relative Expiration from Creation"
   default     = "169h"
 }
-
-variable "tags" {
-  type        = map(string)
-  description = "Azure Resource Tag(s)"
-  default     = {}
-}

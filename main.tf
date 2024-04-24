@@ -79,18 +79,12 @@ locals {
 }
 
 locals  {
-  suffix     = "${random_string.this}-${local.program}-${local.project}"
+  suffix     = "${random_string.this.id}-${local.program}-${local.project}"
   roles_list = distinct(concat(var.roles_list, [
     "Microsoft.Resources/subscriptions/providers/read",
     "Microsoft.Resources/subscriptions/resourceGroups/*",
     "Microsoft.Authorization/roleAssignments/*",
   ]))
-
-  tags    = merge(var.tags, {
-    program = local.program
-    project = local.project
-    env     = "dev"
-  })
 }
 
 ## ---------------------------------------------------------------------------------------------------------------------
@@ -139,7 +133,6 @@ resource "azuread_application" "this" {
 
   display_name = "${var.application_display_name}-${local.suffix}"
   owners       = [data.azuread_client_config.current.object_id]
-  tags         = local.tags
 }
 
 
@@ -162,7 +155,6 @@ resource "azuread_service_principal" "this" {
   client_id                    = azuread_application.this.client_id
   app_role_assignment_required = false
   owners                       = [data.azuread_client_config.current.object_id]
-  tags                         = local.tags
 }
 
 ## ---------------------------------------------------------------------------------------------------------------------
