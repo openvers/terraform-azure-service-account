@@ -204,7 +204,7 @@ resource "azurerm_role_assignment" "this" {
   provider           = azurerm.tokengen
   depends_on         = [azurerm_role_assignment.this]
 
-  name               = "${var.role_name}-assingment-${local.suffix}"
+  name               = random_uuid.this.result
   scope              = data.azurerm_subscription.primary.id
   role_definition_id = azurerm_role_definition.this.role_definition_resource_id
   principal_id       = azuread_group.this.id
