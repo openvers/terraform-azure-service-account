@@ -9,14 +9,12 @@ terraform{
     random  = "~> 2.2"
     azuread = {
       source = "hashicorp/azuread"
-      version = "~>2.47"
       configuration_aliases = [
         azuread.tokengen,
       ]
     }
     azurerm = {
       source = "hashicorp/azurerm"
-      version = "~>3.86"
       configuration_aliases = [
         azurerm.tokengen,
       ]

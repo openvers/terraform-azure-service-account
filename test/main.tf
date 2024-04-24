@@ -53,7 +53,7 @@ provider "azurerm" {
 ## - `azurerm.tokengen`: Alias for the Azure Resource Manager (Azurerm) provider for generating tokens.
 ##---------------------------------------------------------------------------------------------------------------------
 module "azure_service_account" {
-  source  = "../"
+  source  = "../modules/service_account"
 
   application_display_name = var.application_display_name
   role_name                = var.role_name
