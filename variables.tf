@@ -36,7 +36,7 @@ variable "client_secret_expiration" {
 }
 
 variable "tags" {
-  type        = map()
+  type        = map(string)
   description = "Azure Resource Tag(s)"
   default     = {}
 }
