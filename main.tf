@@ -113,6 +113,10 @@ resource "azurerm_role_definition" "this" {
   assignable_scopes = [
     data.azurerm_subscription.primary.id,
   ]
+
+  timeouts {
+    delete = "2m"
+  }
 }
 
 
