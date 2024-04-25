@@ -50,6 +50,7 @@ jobs:
           if: "${{ github.event.inputs.terraform_operation == 'plan' }}"
     
     terraform-write:
+      if: "${{ github.event.inputs.terraform_operation == 'apply' || github.event.inputs.terraform_operation == 'destroy' }}"
       name: Terraform Write Privilege Job
       runs-on: ubuntu-latest
       environment: production
