@@ -27,6 +27,7 @@ env:
 jobs:
     terraform-read:
       name: Terraform Read Privilege Job
+      if: "${{ github.event.inputs.terraform_operation == 'plan' }}"
       runs-on: ubuntu-latest
       defaults:
         run:
@@ -50,11 +51,10 @@ jobs:
           if: "${{ github.event.inputs.terraform_operation == 'plan' }}"
     
     terraform-write:
-      if: "${{ github.event.inputs.terraform_operation == 'apply' || github.event.inputs.terraform_operation == 'destroy' }}"
       name: Terraform Write Privilege Job
+      if: "${{ github.event.inputs.terraform_operation == 'apply' || github.event.inputs.terraform_operation == 'destroy' }}"
       runs-on: ubuntu-latest
       environment: production
-      needs: [terraform-read]
       defaults:
         run:
           working-directory: "test"
@@ -71,7 +71,11 @@ jobs:
           uses: hashicorp/setup-terraform@v3
           with:
             cli_config_credentials_token: ${{ secrets.TF_API_TOKEN_AZURE_WORKSPACE }}
-            
+        
+        - name: Terraform init
+          if: "${{ env.ARM_CLIENT_ID != '' && env.ARM_SUBSCRIPTION_ID != '' && env.ARM_TENANT_ID != ''}}"
+          run: terraform init
+
         - name: Terraform apply
           run: terraform apply --auto-approve
           if: "${{ github.event.inputs.terraform_operation == 'apply' }}"
