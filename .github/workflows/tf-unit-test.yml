@@ -4,9 +4,9 @@ on:
   push:
 
 permissions:
-  security-events: write # Needed to upload-sarif
-  contents: read # Needed to clone repo
-  actions: read # Potentially needed for private repositories (see https://github.com/github/codeql-action/issues/2117)
+    id-token: write
+    contents: read
+    issues: write
 
 jobs:
   terraform-unit-tests:
