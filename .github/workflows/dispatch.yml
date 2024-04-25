@@ -55,6 +55,9 @@ jobs:
       runs-on: ubuntu-latest
       environment: production
       needs: [terraform-read]
+      defaults:
+        run:
+          working-directory: "test"
       
       env:
         ARM_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
