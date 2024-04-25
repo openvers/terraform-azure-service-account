@@ -25,8 +25,8 @@ env:
   ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
 
 jobs:
-    terraform-dispatch-job:
-      name: Terraform Dispatch Job
+    terraform-read:
+      name: Terraform Read Privilege Job
       runs-on: ubuntu-latest
       defaults:
         run:
@@ -48,7 +48,20 @@ jobs:
         - name: Terraform plan
           run: terraform plan
           if: "${{ github.event.inputs.terraform_operation == 'plan' }}"
-  
+    
+    terraform-write:
+      name: Terraform Write Privilege Job
+      runs-on: ubuntu-latest
+      environment: production
+      needs: [terraform-read]
+      defaults:
+        run:
+          working-directory: "./test"
+      env:
+        ARM_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
+        ARM_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
+      
+      steps:
         - name: Terraform apply
           run: terraform apply --auto-approve
           if: "${{ github.event.inputs.terraform_operation == 'apply' }}"
