@@ -4,9 +4,9 @@ Create an Azuure Service Principal to manage resouces when MSI isn't an option
 List of Resource Provider Operations found here
 https://learn.microsoft.com/en-ca/azure/role-based-access-control/resource-provider-operations
 */
-terraform{
+terraform {
   required_providers {
-    random  = "~> 2.2"
+    random = "~> 2.2"
     azuread = {
       source = "hashicorp/azuread"
       configuration_aliases = [
@@ -78,8 +78,8 @@ locals {
   project = "cloud-auth"
 }
 
-locals  {
-  suffix     = "${random_string.this.id}-${local.program}-${local.project}"
+locals {
+  suffix = "${random_string.this.id}-${local.program}-${local.project}"
   roles_list = distinct(concat(var.roles_list, [
     "Microsoft.Resources/subscriptions/providers/read",
     "Microsoft.Resources/subscriptions/resourceGroups/*",
@@ -99,7 +99,7 @@ locals  {
 ## - `azurerm.tokengen`: Azure provider for token generation.
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "azurerm_role_definition" "this" {
-  provider           = azurerm.tokengen
+  provider = azurerm.tokengen
 
   role_definition_id = random_uuid.this.result
   name               = "${var.role_name}-${local.suffix}"
@@ -132,8 +132,8 @@ resource "azurerm_role_definition" "this" {
 ## - `azuread.tokengen`: Azure Active Directory provider for token generation.
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "azuread_application" "this" {
-  provider     = azuread.tokengen
-  depends_on   = [azurerm_role_definition.this]
+  provider   = azuread.tokengen
+  depends_on = [azurerm_role_definition.this]
 
   display_name = "${var.application_display_name}-${local.suffix}"
   owners       = [data.azuread_client_config.current.object_id]
@@ -153,8 +153,8 @@ resource "azuread_application" "this" {
 ## - `azuread.tokengen`: Azure Active Directory provider for token generation.
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "azuread_service_principal" "this" {
-  provider                     = azuread.tokengen
-  depends_on                   = [azuread_application.this]
+  provider   = azuread.tokengen
+  depends_on = [azuread_application.this]
 
   client_id                    = azuread_application.this.client_id
   app_role_assignment_required = false
@@ -176,8 +176,8 @@ resource "azuread_service_principal" "this" {
 ## - `azuread.tokengen`: Azure Active Directory provider for token generation.
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "azuread_group" "this" {
-  provider         = azuread.tokengen
-  depends_on       = [azuread_service_principal.this]
+  provider   = azuread.tokengen
+  depends_on = [azuread_service_principal.this]
 
   display_name     = "${var.security_group_name}-${local.suffix}"
   owners           = [data.azuread_client_config.current.object_id]
@@ -205,8 +205,8 @@ resource "azuread_group" "this" {
 ## - `azurerm.tokengen`: Azure provider for token generation.
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "azurerm_role_assignment" "this" {
-  provider           = azurerm.tokengen
-  depends_on         = [azurerm_role_assignment.this]
+  provider   = azurerm.tokengen
+  depends_on = [azurerm_role_assignment.this]
 
   name               = random_uuid.this.result
   scope              = data.azurerm_subscription.primary.id
@@ -228,8 +228,8 @@ resource "azurerm_role_assignment" "this" {
 ## - `azuread.tokengen`: Azure Active Directory provider for token generation.
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "azuread_service_principal_password" "this" {
-  provider             = azuread.tokengen
-  depends_on           = [azurerm_role_assignment.this]
+  provider   = azuread.tokengen
+  depends_on = [azurerm_role_assignment.this]
 
   service_principal_id = azuread_service_principal.this.object_id
   end_date_relative    = var.client_secret_expiration
@@ -244,6 +244,6 @@ resource "azuread_service_principal_password" "this" {
 ## - `create_duration`: The duration for the time sleep.
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "time_sleep" "key_propogation" {
-  depends_on      = [ azuread_service_principal_password.this ]
+  depends_on      = [azuread_service_principal_password.this]
   create_duration = "60s"
 }

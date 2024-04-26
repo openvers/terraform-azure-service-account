@@ -1,17 +1,17 @@
 name: 'Terraform Workflow Dispatch'
 
 on:
-    workflow_dispatch:
-      inputs:
-        terraform_operation:
-          description: "Terraform operation: plan, apply, destroy"
-          required: true
-          default: "plan"
-          type: choice
-          options:
-            - plan
-            - apply
-            - destroy
+  workflow_dispatch:
+    inputs:
+      terraform_operation:
+        description: "Terraform operation: plan, apply, destroy"
+        required: true
+        default: "plan"
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
 
 permissions:
   id-token: write
@@ -25,9 +25,9 @@ env:
   ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
 
 jobs:
-    terraform-read:
+    terraform-dispatch-read:
       name: Terraform Read Privilege Job
-      if: "${{ github.event.inputs.terraform_operation == 'plan' }}"
+      if: "${{ github.event.act || github.event.inputs.terraform_operation == 'plan' }}"
       runs-on: ubuntu-latest
       defaults:
         run:
@@ -43,16 +43,14 @@ jobs:
             cli_config_credentials_token: ${{ secrets.TF_API_TOKEN_AZURE_WORKSPACE }}
   
         - name: Terraform init
-          if: "${{ env.ARM_CLIENT_ID != '' && env.ARM_SUBSCRIPTION_ID != '' && env.ARM_TENANT_ID != ''}}"
           run: terraform init
   
         - name: Terraform plan
           run: terraform plan
-          if: "${{ github.event.inputs.terraform_operation == 'plan' }}"
     
-    terraform-write:
+    terraform-dispatch-write:
       name: Terraform Write Privilege Job
-      if: "${{ github.event.inputs.terraform_operation == 'apply' || github.event.inputs.terraform_operation == 'destroy' }}"
+      if: "${{ github.event.act || github.event.inputs.terraform_operation == 'apply' || github.event.inputs.terraform_operation == 'destroy' }}"
       runs-on: ubuntu-latest
       environment: production
       defaults:
@@ -73,13 +71,17 @@ jobs:
             cli_config_credentials_token: ${{ secrets.TF_API_TOKEN_AZURE_WORKSPACE }}
         
         - name: Terraform init
-          if: "${{ env.ARM_CLIENT_ID != '' && env.ARM_SUBSCRIPTION_ID != '' && env.ARM_TENANT_ID != ''}}"
           run: terraform init
 
         - name: Terraform apply
+          if: "${{ github.event.act || github.event.inputs.terraform_operation == 'apply' }}"
           run: terraform apply --auto-approve
-          if: "${{ github.event.inputs.terraform_operation == 'apply' }}"
   
         - name: Terraform destroy
-          run: terraform destroy --auto-approve
-          if: "${{ github.event.inputs.terraform_operation == 'destroy' }}"
+          if: "${{ github.event.act || github.event.inputs.terraform_operation == 'destroy' }}"
+          uses: nick-fields/retry@v3
+          with:
+            timeout_minutes: 5
+            max_attempts: 3
+            retry_on: error
+            command: 'terraform -chdir=test destroy --auto-approve'
