@@ -125,7 +125,7 @@ jobs:
                 
   terraform-integration-apply:
     name: 'Terraform Apply'
-    if: github.event.act || github.ref == 'refs/heads/main' && needs.terraform-plan.outputs.tfplanExitCode == 2
+    if: github.event.act || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
     needs: [terraform-integration-plan]
