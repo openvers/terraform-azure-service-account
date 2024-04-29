@@ -13,6 +13,7 @@ permissions:
 jobs:
   terraform-unit-tests:
     name: 'Terraform Unit Tests'
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     defaults:
         run:

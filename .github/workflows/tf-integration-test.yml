@@ -25,6 +25,7 @@ env:
 
 jobs:
   terraform-integration-plan:
+    if: github.actor != 'github-actions[bot]'
     name: 'Terraform Plan'
     runs-on: ubuntu-latest
     defaults:
