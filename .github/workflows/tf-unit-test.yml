@@ -27,6 +27,8 @@ jobs:
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
+      with:
+        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
@@ -49,7 +51,7 @@ jobs:
 
     # Upload results to GitHub Advanced Security
     - name: Upload SARIF file
-      if: ${{ !github.event.act && success() || failure() }}
+      if: ${{ !github.event.act && success() || !github.event.act && failure() }}
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: results.sarif

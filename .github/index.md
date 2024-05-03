@@ -30,13 +30,13 @@ EOF
 
 ```
 # Try the Terraform Read job first
-act -j terraform-read \
+act -j terraform-dispatch-read \
     -e .github/local.json \
     --secret-file ~/creds/azure.secrets \
     --remote-name $(git remote show)
 
 # Use the Terraform Write job to apply/destroy the infra configuration
-act -j terraform-write \
+act -j terraform-dispatch-write \
     -e .github/local.json \
     --secret-file ~/creds/azure.secrets \
     --remote-name $(git remote show)
@@ -51,7 +51,7 @@ mkdir /tmp/artifacts
 # Run the full Integration test with
 act -j terraform-integration-destroy \
     -e .github/local.json \
-    --secret-file ~/development/terraform/creds/azure.secrets \
+    --secret-file ~/creds/azure.secrets \
     --remote-name $(git remote show) \ 
     --artifact-server-path /tmp/artifacts
 ```
@@ -61,5 +61,6 @@ act -j terraform-integration-destroy \
 ```
 act -j terraform-unit-tests \
     -e .github/local.json \
-    --remote-name sim-parables
+    --secret-file ~/creds/azure.secrets \
+    --remote-name $(git remote show)
 ```
