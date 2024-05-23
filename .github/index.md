@@ -13,16 +13,16 @@ Store the identical Secrets in Github Organization/Repository to local workstati
 ```
 cat <<EOF > ~/creds/azure.secrets
 # Terraform.io Token
-TF_API_TOKEN_AZURE_WORKSPACE=...
+TF_API_TOKEN=[COPY/PASTE MANUALLY]
 
 # Github PAT
-GITHUB_TOKEN=...
+GITHUB_TOKEN=$(gh auth token)
 
 # Azure
-AZURE_TENANT_ID=...
-AZURE_SUBSCRIPTION_ID=...
-AZURE_CLIENT_ID=...
-AZURE_CLIENT_SECRET=...
+AZURE_TENANT_ID=$(az account list | jq -r '.[].tenantId')
+AZURE_SUBSCRIPTION_ID=$(az account list | jq -r '.[].id')
+AZURE_CLIENT_ID=[COPY/PASTE MANUALLY]
+AZURE_CLIENT_SECRET=[COPY/PASTE MANUALLY]
 EOF
 ```
 
@@ -30,13 +30,17 @@ EOF
 
 ```
 # Try the Terraform Read job first
-act -j terraform-dispatch-read \
+act -j terraform-dispatch-plan \
     -e .github/local.json \
-    --secret-file ~/creds/azure.secrets \
+    --secret-file ~/creds/aws.secrets \
     --remote-name $(git remote show)
 
-# Use the Terraform Write job to apply/destroy the infra configuration
-act -j terraform-dispatch-write \
+act -j terraform-dispatch-apply \
+    -e .github/local.json \
+    --secret-file ~/creds/aws.secrets \
+    --remote-name $(git remote show)
+
+act -j terraform-dispatch-destroy \
     -e .github/local.json \
     --secret-file ~/creds/azure.secrets \
     --remote-name $(git remote show)
@@ -52,7 +56,7 @@ mkdir /tmp/artifacts
 act -j terraform-integration-destroy \
     -e .github/local.json \
     --secret-file ~/creds/azure.secrets \
-    --remote-name $(git remote show) \ 
+    --remote-name $(git remote show) \
     --artifact-server-path /tmp/artifacts
 ```
 

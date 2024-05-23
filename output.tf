@@ -1,3 +1,8 @@
+output "application_id" {
+  description = "Azure Application ID"
+  value       = azuread_application.this.id
+}
+
 output "client_id" {
   description = "Azure Service Principal Client ID"
   value       = azuread_application.this.client_id

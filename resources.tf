@@ -26,9 +26,6 @@ terraform {
 ## AZURERM SUBSCRIPTION DATA SOURCE
 ##
 ## This data source retrieves information about the primary Azure subscription.
-##
-## Providers:
-## - `azurerm.tokengen`: Azure provider for token generation.
 ## ---------------------------------------------------------------------------------------------------------------------
 data "azurerm_subscription" "primary" {
   provider = azurerm.tokengen
@@ -39,9 +36,6 @@ data "azurerm_subscription" "primary" {
 ## AZUREAD CLIENT CONFIGURATION DATA SOURCE
 ##
 ## This data source retrieves the current Azure Active Directory (Azure AD) client configuration.
-##
-## Providers:
-## - `azuread.tokengen`: Azure AD provider for token generation.
 ## ---------------------------------------------------------------------------------------------------------------------
 data "azuread_client_config" "current" {
   provider = azuread.tokengen
@@ -94,9 +88,6 @@ locals {
 ##
 ## Parameters:
 ## - `role_name`: The name of the custom role.
-##
-## Providers:
-## - `azurerm.tokengen`: Azure provider for token generation.
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "azurerm_role_definition" "this" {
   provider = azurerm.tokengen
@@ -127,9 +118,6 @@ resource "azurerm_role_definition" "this" {
 ##
 ## Parameters:
 ## - `application_display_name`: The display name of the application.
-##
-## Providers:
-## - `azuread.tokengen`: Azure Active Directory provider for token generation.
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "azuread_application" "this" {
   provider   = azuread.tokengen
@@ -148,9 +136,6 @@ resource "azuread_application" "this" {
 ## Parameters:
 ## - `client_id`: The client ID of the associated application.
 ## - `app_role_assignment_required`: Specifies whether the service principal requires an app role assignment.
-##
-## Providers:
-## - `azuread.tokengen`: Azure Active Directory provider for token generation.
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "azuread_service_principal" "this" {
   provider   = azuread.tokengen
@@ -171,9 +156,6 @@ resource "azuread_service_principal" "this" {
 ## - `owners`: A list of object IDs of users who are owners of the group.
 ## - `security_enabled`: Specifies whether the group is security-enabled.
 ## - `members`: A list of object IDs of users or service principals who are members of the group.
-##
-## Providers:
-## - `azuread.tokengen`: Azure Active Directory provider for token generation.
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "azuread_group" "this" {
   provider   = azuread.tokengen
@@ -200,9 +182,6 @@ resource "azuread_group" "this" {
 ## - `scope`: The scope at which the role assignment is applied.
 ## - `role_definition_id`: The ID of the role definition to assign.
 ## - `principal_id`: The ID of the security group to which the role is assigned.
-##
-## Providers:
-## - `azurerm.tokengen`: Azure provider for token generation.
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "azurerm_role_assignment" "this" {
   provider   = azurerm.tokengen
@@ -223,9 +202,6 @@ resource "azurerm_role_assignment" "this" {
 ## Parameters:
 ## - `service_principal_id`: The ID of the service principal for which the password is generated.
 ## - `end_date_relative`: The relative expiration date for the password.
-##
-## Providers:
-## - `azuread.tokengen`: Azure Active Directory provider for token generation.
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "azuread_service_principal_password" "this" {
   provider   = azuread.tokengen

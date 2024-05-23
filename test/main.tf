@@ -38,6 +38,23 @@ provider "azurerm" {
   features {}
 }
 
+locals {
+  oidc_subject = [
+    {
+      display_name = "example-federated-idp-readwrite"
+      subject      = "repo:${var.GITHUB_REPOSITORY}:environment:${var.GITHUB_ENV}"
+    },
+    {
+      display_name = "example-federated-idp-read"
+      subject      = "repo:${var.GITHUB_REPOSITORY}:ref:${var.GITHUB_REF}"
+    }
+  ]
+}
+
+data "azurerm_client_config" "current" {
+  provider = azurerm.tokengen
+}
+
 ##---------------------------------------------------------------------------------------------------------------------
 ## AZURE SERVICE ACCOUNT MODULE
 ##
@@ -47,13 +64,10 @@ provider "azurerm" {
 ## - `application_display_name`: The display name of the Azure application.
 ## - `role_name`: The name of the role for the Azure service account.
 ## - `security_group_name`: The name of the security group.
-##
-## Providers:
-## - `azuread.tokengen`: Alias for the Azure AD provider for generating tokens.
-## - `azurerm.tokengen`: Alias for the Azure Resource Manager (Azurerm) provider for generating tokens.
 ##---------------------------------------------------------------------------------------------------------------------
 module "azure_service_account" {
-  source = "../"
+  source     = "../"
+  depends_on = [data.azurerm_client_config.current]
 
   application_display_name = var.application_display_name
   role_name                = var.role_name
@@ -62,5 +76,31 @@ module "azure_service_account" {
   providers = {
     azuread.tokengen = azuread.tokengen
     azurerm.tokengen = azurerm.tokengen
+  }
+}
+
+
+##---------------------------------------------------------------------------------------------------------------------
+## AZURE APPLICATION IDENTITY FEDERATION CREDENTIALS MODULE
+##
+## This module creates a Federated Identity Credential for the application to authenticate with Github Actions
+## without client credetials through OpenID Connect protocol.
+##
+## Parameters:
+## - `application_id`: Azure service account application ID.
+## - `display_name`: Identity Federation Credential display name.
+## - `subject`: OIDC authentication subject.
+##---------------------------------------------------------------------------------------------------------------------
+module "azure_application_federated_identity_credential" {
+  source     = "../modules/identity_federation"
+  depends_on = [module.azure_service_account]
+  for_each   = tomap({ for t in local.oidc_subject : "${t.display_name}-${t.subject}" => t })
+
+  application_id = module.azure_service_account.application_id
+  display_name   = each.value.display_name
+  subject        = each.value.subject
+
+  providers = {
+    azuread.auth_session = azuread.tokengen
   }
 }
