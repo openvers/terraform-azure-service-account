@@ -34,21 +34,9 @@ jobs:
           echo "TF_VAR_GITHUB_REF=$(echo $TF_VAR_GITHUB_REF | base64 -w0 | base64 -w0)" >> $GITHUB_OUTPUT
           echo "TF_VAR_GITHUB_ENV=$(echo $TF_VAR_GITHUB_ENV | base64 -w0 | base64 -w0)" >> $GITHUB_OUTPUT
   
-  terraform-auth:
-    uses: sim-parables/github-workflows-reusable/.github/workflows/tf-reusable-auth.yml@AzureV1
-    secrets:
-      AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
-      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      AZURE_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-      AZURE_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
-      TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
-    with:
-      ACT_MODE: ${{ !!github.event.act }}
-      working_directory: ./test/service_account
-  
-  terraform-dispatch-plan-0:
+  terraform-integration-plan-0:
     needs: [ reusable-env-vars ]
-    uses: sim-parables/github-workflows-reusable/.github/workflows/tf-dispatch-plan.yml@AzureV1
+    uses: sim-parables/github-workflows-reusable/.github/workflows/tf-integration-plan.yml@AzureV1
     secrets:
       AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
       AZURE_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
@@ -66,8 +54,8 @@ jobs:
   
   terraform-integration-plan:
     if: github.actor != 'github-actions[bot]'
-    needs: [ reusable-env-vars, terraform-dispatch-plan-0 ]
-    uses: sim-parables/github-workflows-reusable/.github/workflows/tf-dispatch-plan.yml@AzureV1
+    needs: [ reusable-env-vars, terraform-integration-plan-0 ]
+    uses: sim-parables/github-workflows-reusable/.github/workflows/tf-integration-plan.yml@AzureV1
     secrets:
       AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
       AZURE_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
@@ -83,10 +71,23 @@ jobs:
       ACT_MODE: ${{ !!github.event.act }}
       working_directory: ./test/oidc_config
    
+  terraform-auth:
+    uses: sim-parables/github-workflows-reusable/.github/workflows/tf-reusable-auth.yml@AzureV1
+    needs: [ reusable-env-vars, terraform-integration-plan ]
+    secrets:
+      AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+      AZURE_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+      TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+    with:
+      ACT_MODE: ${{ !!github.event.act }}
+      working_directory: ./test/service_account
+
   terraform-integration-apply:
     if: github.event.act || github.ref == 'refs/heads/main'
-    needs: [ reusable-env-vars, terraform-auth ]
-    uses: sim-parables/github-workflows-reusable/.github/workflows/tf-dispatch-apply.yml@AzureV1
+    needs: [ reusable-env-vars, terraform-auth, terraform-integration-plan ]
+    uses: sim-parables/github-workflows-reusable/.github/workflows/tf-integration-apply.yml@AzureV1
     secrets:
       AZURE_CLIENT_ID: "${{ needs.terraform-auth.outputs.AZURE_CLIENT_ID }}"
       AZURE_CLIENT_SECRET: "${{ needs.terraform-auth.outputs.AZURE_CLIENT_SECRET }}"
@@ -104,8 +105,8 @@ jobs:
       working_directory: ./test/oidc_config
   
   terraform-dispatch-destroy-0:
-    needs: [ reusable-env-vars, terraform-auth ]
-    uses: sim-parables/github-workflows-reusable/.github/workflows/tf-dispatch-destroy.yml@AzureV1
+    needs: [ reusable-env-vars, terraform-auth, terraform-integration-apply ]
+    uses: sim-parables/github-workflows-reusable/.github/workflows/tf-integration-destroy.yml@AzureV1
     secrets:
       AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
       AZURE_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
@@ -124,8 +125,8 @@ jobs:
   
   terraform-integration-destroy:
     if: always()
-    needs: [ reusable-env-vars, terraform-dispatch-destroy-0, terraform-auth ]
-    uses: sim-parables/github-workflows-reusable/.github/workflows/tf-dispatch-destroy.yml@AzureV1
+    needs: [ reusable-env-vars, terraform-dispatch-destroy-0, terraform-auth, terraform-integration-apply ]
+    uses: sim-parables/github-workflows-reusable/.github/workflows/tf-integration-destroy.yml@AzureV1
     secrets:
       AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
       AZURE_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
