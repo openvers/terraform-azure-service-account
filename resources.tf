@@ -78,8 +78,19 @@ locals {
     "Microsoft.Resources/subscriptions/providers/read",
     "Microsoft.Resources/subscriptions/resourceGroups/*",
     "Microsoft.Authorization/roleAssignments/*",
+    "Microsoft.Authorization/roleDefinitions/*"
   ]))
+
+  app_role_assignments = flatten([
+    for t in var.api_permissions : [
+      for r in t.role_ids : {
+        resource_object_id = t.resource_object_id
+        role_id            = r
+      }
+    ]
+  ])
 }
+
 
 ## ---------------------------------------------------------------------------------------------------------------------
 ## AZURE ROLE DEFINITION RESOURCE
@@ -106,7 +117,7 @@ resource "azurerm_role_definition" "this" {
   ]
 
   timeouts {
-    delete = "2m"
+    delete = "1m"
   }
 }
 
@@ -118,6 +129,7 @@ resource "azurerm_role_definition" "this" {
 ##
 ## Parameters:
 ## - `application_display_name`: The display name of the application.
+## - `owners`: List of MS Entra ID to own the Azure application.
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "azuread_application" "this" {
   provider   = azuread.tokengen
@@ -146,6 +158,70 @@ resource "azuread_service_principal" "this" {
   owners                       = [data.azuread_client_config.current.object_id]
 }
 
+
+## ---------------------------------------------------------------------------------------------------------------------
+## AZURE ACTIVE DIRECTORY SERVICE PRINCIPAL PASSWORD RESOURCE
+##
+## This resource creates a password for an Azure Active Directory service principal.
+##
+## Parameters:
+## - `service_principal_id`: The ID of the service principal for which the password is generated.
+## - `end_date_relative`: The relative expiration date for the password.
+## ---------------------------------------------------------------------------------------------------------------------
+resource "azuread_service_principal_password" "this" {
+  provider   = azuread.tokengen
+  depends_on = [azuread_service_principal.this]
+
+  service_principal_id = azuread_service_principal.this.object_id
+  end_date_relative    = var.client_secret_expiration
+}
+
+
+## ---------------------------------------------------------------------------------------------------------------------
+## AZURE ACTIVE DIRECTORY APPLICATION API ACCESS RESOURCE
+##
+## This resource represents an application registered in Azure Active Directory.
+##
+## Parameters:
+## - `application_id`: Azure Application ID.
+## - `api_client_id`: MS Entra API ID.
+## - `role_ids`: List Application API Permission RoleID.
+## - `scope_ids`: List Application API Permission RoleID.
+## ---------------------------------------------------------------------------------------------------------------------
+resource "azuread_application_api_access" "this" {
+  provider   = azuread.tokengen
+  depends_on = [azuread_service_principal_password.this]
+  for_each   = tomap({ for t in var.api_permissions : "${t.resource_app_id}" => t })
+
+  application_id = azuread_application.this.id
+  api_client_id  = each.value.resource_app_id
+  role_ids       = each.value.role_ids
+  scope_ids      = each.value.scope_ids
+}
+
+## ---------------------------------------------------------------------------------------------------------------------
+## AZURE ACTIVE DIRECTORY APP ROLE ASSIGNMENT RESOURCE
+##
+## This resource provide admin grants to Azure Application API permissions.
+##
+## Parameters:
+## - `principal_object_id`: Azure Application ID.
+## - `resource_object_id`: MS Entra API object ID.
+## - `app_role_id`: Application API Permission RoleID.
+## ---------------------------------------------------------------------------------------------------------------------
+resource "azuread_app_role_assignment" "this" {
+  provider = azuread.tokengen
+  for_each = tomap({ for t in local.app_role_assignments : "${t.resource_object_id}-${t.role_id}" => t })
+  depends_on = [
+    azuread_application_api_access.this,
+    azuread_service_principal_password.this
+  ]
+
+  app_role_id         = each.value.role_id
+  principal_object_id = azuread_service_principal.this.object_id
+  resource_object_id  = each.value.resource_object_id
+}
+
 ## ---------------------------------------------------------------------------------------------------------------------
 ## AZURE ACTIVE DIRECTORY GROUP RESOURCE
 ##
@@ -159,7 +235,7 @@ resource "azuread_service_principal" "this" {
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "azuread_group" "this" {
   provider   = azuread.tokengen
-  depends_on = [azuread_service_principal.this]
+  depends_on = [azuread_app_role_assignment.this]
 
   display_name     = "${var.security_group_name}-${local.suffix}"
   owners           = [data.azuread_client_config.current.object_id]
@@ -185,30 +261,12 @@ resource "azuread_group" "this" {
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "azurerm_role_assignment" "this" {
   provider   = azurerm.tokengen
-  depends_on = [azurerm_role_assignment.this]
+  depends_on = [azurerm_role_definition.this]
 
   name               = random_uuid.this.result
   scope              = data.azurerm_subscription.primary.id
   role_definition_id = azurerm_role_definition.this.role_definition_resource_id
   principal_id       = azuread_group.this.id
-}
-
-
-## ---------------------------------------------------------------------------------------------------------------------
-## AZURE ACTIVE DIRECTORY SERVICE PRINCIPAL PASSWORD RESOURCE
-##
-## This resource creates a password for an Azure Active Directory service principal.
-##
-## Parameters:
-## - `service_principal_id`: The ID of the service principal for which the password is generated.
-## - `end_date_relative`: The relative expiration date for the password.
-## ---------------------------------------------------------------------------------------------------------------------
-resource "azuread_service_principal_password" "this" {
-  provider   = azuread.tokengen
-  depends_on = [azurerm_role_assignment.this]
-
-  service_principal_id = azuread_service_principal.this.object_id
-  end_date_relative    = var.client_secret_expiration
 }
 
 ## ---------------------------------------------------------------------------------------------------------------------
@@ -220,6 +278,10 @@ resource "azuread_service_principal_password" "this" {
 ## - `create_duration`: The duration for the time sleep.
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "time_sleep" "key_propogation" {
-  depends_on      = [azuread_service_principal_password.this]
+  depends_on = [
+    azuread_service_principal_password.this,
+    azurerm_role_assignment.this
+  ]
+
   create_duration = "60s"
 }

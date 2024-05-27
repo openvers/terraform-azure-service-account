@@ -34,14 +34,25 @@ jobs:
           echo "TF_VAR_GITHUB_REPOSITORY=$(echo $TF_VAR_GITHUB_REPOSITORY | base64 -w0 | base64 -w0)" >> $GITHUB_OUTPUT
           echo "TF_VAR_GITHUB_REF=$(echo $TF_VAR_GITHUB_REF | base64 -w0 | base64 -w0)" >> $GITHUB_OUTPUT
           echo "TF_VAR_GITHUB_ENV=$(echo $TF_VAR_GITHUB_ENV | base64 -w0 | base64 -w0)" >> $GITHUB_OUTPUT
+  
+  terraform-auth:
+    uses: sim-parables/github-workflows-reusable/.github/workflows/tf-reusable-auth.yml@AzureV1
+    secrets:
+      AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+      AZURE_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+      TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+    with:
+      ACT_MODE: ${{ !!github.event.act }}
+      working_directory: ./test/service_account
 
-  terraform-dispatch-plan:
-    if: "${{ github.event.act || github.event.inputs.terraform_operation == 'plan' }}"
+  terraform-dispatch-plan-0:
     needs: [ reusable-env-vars ]
     uses: sim-parables/github-workflows-reusable/.github/workflows/tf-dispatch-plan.yml@AzureV1
     secrets:
       AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
-      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
       AZURE_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
       AZURE_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
       TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
@@ -52,32 +63,73 @@ jobs:
         TF_VAR_GITHUB_ENV="${{ needs.reusable-env-vars.outputs.TF_VAR_GITHUB_ENV }}"
     with:
       ACT_MODE: ${{ !!github.event.act }}
+      working_directory: ./test/service_account
+  
+  terraform-dispatch-plan:
+    if: "${{ github.event.act || github.event.inputs.terraform_operation == 'plan' }}"
+    needs: [ reusable-env-vars, terraform-dispatch-plan-0 ]
+    uses: sim-parables/github-workflows-reusable/.github/workflows/tf-dispatch-plan.yml@AzureV1
+    secrets:
+      AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
+      AZURE_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
+      AZURE_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+      AZURE_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+      TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+      env_variables: |
+        TF_VAR_GITHUB_REPOSITORY_OWNER="${{ needs.reusable-env-vars.outputs.TF_VAR_GITHUB_REPOSITORY_OWNER }}"
+        TF_VAR_GITHUB_REPOSITORY="${{ needs.reusable-env-vars.outputs.TF_VAR_GITHUB_REPOSITORY }}"
+        TF_VAR_GITHUB_REF="${{ needs.reusable-env-vars.outputs.TF_VAR_GITHUB_REF }}"
+        TF_VAR_GITHUB_ENV="${{ needs.reusable-env-vars.outputs.TF_VAR_GITHUB_ENV }}"
+    with:
+      ACT_MODE: ${{ !!github.event.act }}
+      working_directory: ./test/oidc_config
       
   terraform-dispatch-apply:
     if: ${{ github.event.act ||github.event.inputs.terraform_operation == 'apply' }}
-    needs: [ reusable-env-vars ]
+    needs: [ reusable-env-vars, terraform-auth ]
     uses: sim-parables/github-workflows-reusable/.github/workflows/tf-dispatch-apply.yml@AzureV1
     secrets:
-      AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
-      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_CLIENT_ID: "${{ needs.terraform-auth.outputs.AZURE_CLIENT_ID }}"
+      AZURE_CLIENT_SECRET: "${{ needs.terraform-auth.outputs.AZURE_CLIENT_SECRET }}"
       AZURE_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
       AZURE_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
       TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
       env_variables: |
+        TF_VAR_APPLICATION_ID="${{ needs.terraform-auth.outputs.AZURE_APPLICATION_ID }}"
         TF_VAR_GITHUB_REPOSITORY_OWNER="${{ needs.reusable-env-vars.outputs.TF_VAR_GITHUB_REPOSITORY_OWNER }}"
         TF_VAR_GITHUB_REPOSITORY="${{ needs.reusable-env-vars.outputs.TF_VAR_GITHUB_REPOSITORY }}"
         TF_VAR_GITHUB_REF="${{ needs.reusable-env-vars.outputs.TF_VAR_GITHUB_REF }}"
         TF_VAR_GITHUB_ENV="${{ needs.reusable-env-vars.outputs.TF_VAR_GITHUB_ENV }}"
     with:
       ACT_MODE: ${{ !!github.event.act }}
+      working_directory: ./test/oidc_config
 
-  terraform-dispatch-destroy:
-    if: ${{ github.event.act ||github.event.inputs.terraform_operation == 'destroy' }}
-    needs: [ reusable-env-vars ]
+  terraform-dispatch-destroy-0:
+    needs: [ reusable-env-vars, terraform-auth ]
     uses: sim-parables/github-workflows-reusable/.github/workflows/tf-dispatch-destroy.yml@AzureV1
     secrets:
-      AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
-      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_CLIENT_ID: "${{ needs.terraform-auth.outputs.AZURE_CLIENT_ID }}"
+      AZURE_CLIENT_SECRET: "${{ needs.terraform-auth.outputs.AZURE_CLIENT_SECRET }}"
+      AZURE_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+      AZURE_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+      TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+      env_variables: |
+        TF_VAR_APPLICATION_ID="${{ needs.terraform-auth.outputs.AZURE_APPLICATION_ID }}"
+        TF_VAR_GITHUB_REPOSITORY_OWNER="${{ needs.reusable-env-vars.outputs.TF_VAR_GITHUB_REPOSITORY_OWNER }}"
+        TF_VAR_GITHUB_REPOSITORY="${{ needs.reusable-env-vars.outputs.TF_VAR_GITHUB_REPOSITORY }}"
+        TF_VAR_GITHUB_REF="${{ needs.reusable-env-vars.outputs.TF_VAR_GITHUB_REF }}"
+        TF_VAR_GITHUB_ENV="${{ needs.reusable-env-vars.outputs.TF_VAR_GITHUB_ENV }}"
+    with:
+      ACT_MODE: ${{ !!github.event.act }}
+      working_directory: ./test/oidc_config
+  
+  terraform-dispatch-destroy:
+    if: ${{ github.event.act ||github.event.inputs.terraform_operation == 'destroy' }}
+    needs: [ reusable-env-vars, terraform-dispatch-destroy-0, terraform-auth ]
+    uses: sim-parables/github-workflows-reusable/.github/workflows/tf-dispatch-destroy.yml@AzureV1
+    secrets:
+      AZURE_CLIENT_ID: "${{ needs.terraform-auth.outputs.AZURE_CLIENT_ID }}"
+      AZURE_CLIENT_SECRET: "${{ needs.terraform-auth.outputs.AZURE_CLIENT_SECRET }}"
       AZURE_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
       AZURE_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
       TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
@@ -88,4 +140,5 @@ jobs:
         TF_VAR_GITHUB_ENV="${{ needs.reusable-env-vars.outputs.TF_VAR_GITHUB_ENV }}"
     with:
       ACT_MODE: ${{ !!github.event.act }}
+      working_directory: ./test/service_account
 

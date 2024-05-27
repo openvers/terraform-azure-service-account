@@ -10,13 +10,11 @@ output "client_id" {
 
 output "client_secret_key" {
   depends_on  = [time_sleep.key_propogation]
-  sensitive   = true
   description = "Azure Service Principal Secret ID"
   value       = azuread_service_principal_password.this.key_id
 }
 
 output "client_secret" {
-  sensitive   = true
   description = "Azure Service Principal Secret"
   value       = azuread_service_principal_password.this.value
 }

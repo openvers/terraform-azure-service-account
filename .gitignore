@@ -1,2 +1,4 @@
-test/.terraform/*
-test/.terraform.lock.hcl
+test/service_account/.terraform/*
+test/service_account/.terraform.lock.hcl
+test/oidc_config/.terraform/*
+test/oidc_config/.terraform.lock.hcl

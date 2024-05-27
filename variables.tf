@@ -34,3 +34,14 @@ variable "client_secret_expiration" {
   description = "Service Account Secret Relative Expiration from Creation"
   default     = "169h"
 }
+
+variable "api_permissions" {
+  description = "Azure Application Registration API Permissions to grant access"
+  default     = []
+  type = list(object({
+    resource_app_id    = string
+    resource_object_id = string
+    role_ids           = list(string)
+    scope_ids          = list(string)
+  }))
+}

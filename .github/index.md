@@ -32,12 +32,12 @@ EOF
 # Try the Terraform Read job first
 act -j terraform-dispatch-plan \
     -e .github/local.json \
-    --secret-file ~/creds/aws.secrets \
+    --secret-file ~/creds/azure.secrets \
     --remote-name $(git remote show)
 
 act -j terraform-dispatch-apply \
     -e .github/local.json \
-    --secret-file ~/creds/aws.secrets \
+    --secret-file ~/creds/azure.secrets \
     --remote-name $(git remote show)
 
 act -j terraform-dispatch-destroy \
