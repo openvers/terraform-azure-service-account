@@ -4,7 +4,7 @@ terraform {
     azuread = {
       source = "hashicorp/azuread"
       configuration_aliases = [
-        azuread.auth_session,
+        azuread.tokengen,
       ]
     }
   }
@@ -32,7 +32,7 @@ locals {
 ## - `subject`: OIDC subject line to allow authentication.
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "azuread_application_federated_identity_credential" "this" {
-  provider = azuread.auth_session
+  provider = azuread.tokengen
 
   application_id = var.application_id
   display_name   = var.display_name
