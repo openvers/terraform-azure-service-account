@@ -1,7 +1,6 @@
 output "service_account_client_id" {
   description = "Azure Service Account Client ID"
   value       = module.azure_service_account.client_id
-  sensitive   = true
 }
 
 output "service_account_client_secret" {
@@ -13,5 +12,4 @@ output "service_account_client_secret" {
 output "service_account_application_id" {
   description = "Azure Service Account Application ID"
   value       = module.azure_service_account.application_id
-  sensitive   = true
 }
