@@ -45,3 +45,20 @@ variable "api_permissions" {
     scope_ids          = list(string)
   }))
 }
+
+variable "application_template_id" {
+  type        = string
+  description = "Azure Gallery App Template ID"
+  default     = null
+}
+
+variable "application_app_roles" {
+  description = "App Roles to bind to Application for Downstream Services"
+  default     = null
+  type = list(object({
+    allowed_member_types = list(string)
+    description          = string
+    display_name         = string
+    value                = string
+  }))
+}

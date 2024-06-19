@@ -69,6 +69,7 @@ module "azure_service_account" {
 | roles_list               | List of Permitted Service Account Roles | list(string) | []      | No       |
 | client_secret_expiration | Client Secret Expiration in Hours       | string       | 169h    | No       |
 | tags                     | Azure Resource Tag(s)                   | map()        | {}      | No       |
+| application_template_id  | Azure Gallery App Template ID           | string       | null    | No       |
 
 ## Outputs
 

@@ -73,6 +73,15 @@ locals {
       ]
     }
   ]
+
+  app_roles = [
+    {
+      allowed_member_types = ["User"]
+      description          = "Test App Role"
+      display_name         = "Administrator"
+      value                = "admin"
+    }
+  ]
 }
 
 data "azurerm_client_config" "current" {
@@ -98,12 +107,14 @@ module "azure_service_account" {
   api_permissions          = local.api_permissions
   security_group_name      = var.security_group_name
   role_name                = var.role_name
+  application_app_roles    = local.app_roles
 
   providers = {
     azuread.tokengen = azuread.tokengen
     azurerm.tokengen = azurerm.tokengen
   }
 }
+
 
 ##---------------------------------------------------------------------------------------------------------------------
 ## AZURE APPLICATION IDENTITY FEDERATION CREDENTIALS MODULE

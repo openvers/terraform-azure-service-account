@@ -128,15 +128,49 @@ resource "azurerm_role_definition" "this" {
 ## This resource represents an application registered in Azure Active Directory.
 ##
 ## Parameters:
-## - `application_display_name`: The display name of the application.
+## - `display_name`: The display name of the application.
 ## - `owners`: List of MS Entra ID to own the Azure application.
+## - `template_id`: Azure Gallery App application template ID.
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "azuread_application" "this" {
   provider   = azuread.tokengen
   depends_on = [azurerm_role_definition.this]
 
   display_name = "${var.application_display_name}-${local.suffix}"
+  template_id  = var.application_template_id
   owners       = [data.azuread_client_config.current.object_id]
+}
+
+
+resource "random_uuid" "app_roles" {
+  count = length(var.application_app_roles)
+}
+
+
+## ---------------------------------------------------------------------------------------------------------------------
+## AZURE ACTIVE DIRECTORY APPLICATION APP ROLE RESOURCE
+##
+## This resource binds and App Role configuration to the Azure application.
+##
+## Parameters:
+## - `application_id`: Azure application ID.
+## - `role_id`: Unique ID for App Role with UUID format.
+## - `allowed_member_types`: List of MS Entra member types which the App role can be assigned to.
+## - `description`: App Role description.
+## - `display_name`: App Role display name.
+## - `value`: App Role member value.
+## ---------------------------------------------------------------------------------------------------------------------
+resource "azuread_application_app_role" "this" {
+  provider   = azuread.tokengen
+  depends_on = [azuread_application.this]
+  count      = length(var.application_app_roles)
+
+  application_id       = azuread_application.this.id
+  role_id              = random_uuid.app_roles[count.index].result
+  allowed_member_types = var.application_app_roles[count.index].allowed_member_types
+  description          = var.application_app_roles[count.index].description
+  display_name         = var.application_app_roles[count.index].display_name
+  value                = var.application_app_roles[count.index].value
 }
 
 
@@ -148,6 +182,8 @@ resource "azuread_application" "this" {
 ## Parameters:
 ## - `client_id`: The client ID of the associated application.
 ## - `app_role_assignment_required`: Specifies whether the service principal requires an app role assignment.
+## - `owners`: MS Entra members who own the service principal.
+## - `use_existing`: Flag to declare if service principal already exists.
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "azuread_service_principal" "this" {
   provider   = azuread.tokengen
@@ -156,6 +192,7 @@ resource "azuread_service_principal" "this" {
   client_id                    = azuread_application.this.client_id
   app_role_assignment_required = false
   owners                       = [data.azuread_client_config.current.object_id]
+  use_existing                 = var.application_template_id != null
 }
 
 
