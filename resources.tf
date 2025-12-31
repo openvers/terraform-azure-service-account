@@ -209,7 +209,7 @@ resource "azuread_service_principal_password" "this" {
   provider   = azuread.tokengen
   depends_on = [azuread_service_principal.this]
 
-  service_principal_id = azuread_service_principal.this.object_id
+  service_principal_id = "/servicePrincipals/${azuread_service_principal.this.object_id}"
   end_date_relative    = var.client_secret_expiration
 }
 
@@ -303,7 +303,7 @@ resource "azurerm_role_assignment" "this" {
   name               = random_uuid.this.result
   scope              = data.azurerm_subscription.primary.id
   role_definition_id = azurerm_role_definition.this.role_definition_resource_id
-  principal_id       = azuread_group.this.id
+  principal_id       = azuread_group.this.object_id
 }
 
 ## ---------------------------------------------------------------------------------------------------------------------
