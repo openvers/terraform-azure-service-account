@@ -25,7 +25,8 @@ terraform {
 ## Azure Active Directory (AzureAD) provider authenticated with CLI.
 ##---------------------------------------------------------------------------------------------------------------------
 provider "azuread" {
-  alias = "tokengen"
+  alias   = "tokengen"
+  use_cli = false
 }
 
 ##---------------------------------------------------------------------------------------------------------------------
@@ -36,6 +37,7 @@ provider "azuread" {
 provider "azurerm" {
   alias = "tokengen"
   features {}
+  use_cli = false
 }
 
 data "azuread_application_published_app_ids" "this" {
@@ -44,6 +46,8 @@ data "azuread_application_published_app_ids" "this" {
 
 data "azuread_service_principal" "msgraph" {
   client_id = data.azuread_application_published_app_ids.this.result["MicrosoftGraph"]
+
+  provider = azuread.tokengen
 }
 
 locals {

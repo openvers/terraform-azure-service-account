@@ -38,12 +38,13 @@ jobs:
   terraform-dispatch-plan:
     if: "${{ github.event.act || github.event.inputs.terraform_operation == 'plan' }}"
     needs: [ reusable-env-vars ]
-    uses: sim-parables/github-workflows-reusable/.github/workflows/tf-dispatch-plan.yml@AzureV1
+    uses: openvers/github-workflows-reusable/.github/workflows/tf-dispatch-plan.yml@AzureV1
     secrets:
-      AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
-      AZURE_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
       AZURE_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
       AZURE_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_CERTIFICATE_PATH: ${{ secrets.AZURE_CLIENT_CERTIFICATE_PATH }}
+      AZURE_CLIENT_CERTIFICATE_PASSWORD: ${{ secrets.AZURE_CLIENT_CERTIFICATE_PASSWORD }}
       TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
       env_variables: |
         TF_VAR_GITHUB_REPOSITORY_OWNER="${{ needs.reusable-env-vars.outputs.TF_VAR_GITHUB_REPOSITORY_OWNER }}"
@@ -56,12 +57,13 @@ jobs:
   terraform-dispatch-apply:
     if: ${{ github.event.act ||github.event.inputs.terraform_operation == 'apply' }}
     needs: [ reusable-env-vars ]
-    uses: sim-parables/github-workflows-reusable/.github/workflows/tf-dispatch-apply.yml@AzureV1
+    uses: openvers/github-workflows-reusable/.github/workflows/tf-dispatch-apply.yml@AzureV1
     secrets:
-      AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
-      AZURE_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
       AZURE_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
       AZURE_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_CERTIFICATE_PATH: ${{ secrets.AZURE_CLIENT_CERTIFICATE_PATH }}
+      AZURE_CLIENT_CERTIFICATE_PASSWORD: ${{ secrets.AZURE_CLIENT_CERTIFICATE_PASSWORD }}
       TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
       env_variables: |
         TF_VAR_GITHUB_REPOSITORY_OWNER="${{ needs.reusable-env-vars.outputs.TF_VAR_GITHUB_REPOSITORY_OWNER }}"
@@ -73,12 +75,13 @@ jobs:
 
   terraform-dispatch-destroy:
     needs: [ reusable-env-vars ]
-    uses: sim-parables/github-workflows-reusable/.github/workflows/tf-dispatch-destroy.yml@AzureV1
+    uses: openvers/github-workflows-reusable/.github/workflows/tf-dispatch-destroy.yml@AzureV1
     secrets:
-      AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
-      AZURE_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
       AZURE_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
       AZURE_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_CERTIFICATE_PATH: ${{ secrets.AZURE_CLIENT_CERTIFICATE_PATH }}
+      AZURE_CLIENT_CERTIFICATE_PASSWORD: ${{ secrets.AZURE_CLIENT_CERTIFICATE_PASSWORD }}
       TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
       env_variables: |
         TF_VAR_GITHUB_REPOSITORY_OWNER="${{ needs.reusable-env-vars.outputs.TF_VAR_GITHUB_REPOSITORY_OWNER }}"

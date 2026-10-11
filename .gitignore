@@ -5,3 +5,5 @@ test/oidc_config/.terraform.lock.hcl
 test/.terraform
 test/.terraform.lock.hcl
 .zed
+
+.tmp
