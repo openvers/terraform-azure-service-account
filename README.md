@@ -79,7 +79,6 @@ module "azure_application_federated_identity_credential" {
 
 A test harness is provided in the `test/` directory. It includes:
 - Service account and OIDC federation setup
-- Automated creation of a sample file and upload to the bronze bucket using Terraform's `local_file` and `azure_storage_blob` resources
 - Output variables for integration with CI/CD pipelines
 
 Validate Github Workflows locally with [Nekto's Act](https://nektosact.com/introduction.html). More info found in the Github Repo [https://github.com/nektos/act](https://github.com/nektos/act).
